@@ -2,7 +2,7 @@
 <?php
 
 // Include RPC class
-require_once( dirname( __FILE__ ) . '/class/Transmission.class.php' );
+require_once( dirname( __FILE__ ) . '/class/TransmissionRPC.class.php' );
 
 // Define target folder (/tmp for demo)
 $series_folder = '/tmp';
@@ -42,7 +42,7 @@ foreach ( $sxml->channel->item as $item ) {
 if ( count( $downloads ) > 0 ) {
 
   // create new transmission communication class
-  $rpc = new Transmission();
+  $rpc = new TransmissionRPC();
   
   // Set authentication when needed
   //$rpc->username = 'test';
@@ -53,9 +53,15 @@ if ( count( $downloads ) > 0 ) {
     foreach ( $episodes as $episode ) {
       $target = $series_folder . '/' . $show;
       print "Adding: {$episode->title}.. ";
-      $result = $rpc->add( (string) $episode->link, $target ); // Magic happens here :)
-      print "[{$result->result}]";
-      print "\n";
+      try
+      {
+        $result = $rpc->add( (string) $episode->link, $target ); // Magic happens here :)
+        print "[{$result->result}]";
+        print "\n";
+      } catch (Exception $e)
+      {
+        die('Caught exception: ' . $e->getMessage() . PHP_EOL);
+      }
     } 
   }
 }
