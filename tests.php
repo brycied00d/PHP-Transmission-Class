@@ -13,100 +13,58 @@ try
   $result = $rpc->add( $test_torrent, '/tmp' );
   $id = $result->arguments->torrent_added->id;
   print "ADD TORRENT TEST... [{$result->result}] (id=$id)\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 2 );
+  sleep( 2 );
 
-try
-{
-  $result = $rpc->set( $id, array('uploadLimit' => 100) );
+  $result = $rpc->set( $id, array('uploadLimit' => 10) );
   print "SET TORRENT INFO TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 2 );
+  sleep( 2 );
 
-try
-{
+  $rpc->return_as_array = true;
   $result = $rpc->get( $id, array( 'uploadLimit' ) );
-  print "GET TORRENT INFO TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
+  print "GET TORRENT INFO AS ARRAY TEST... [{$result['result']}]\n";
+  $rpc->return_as_array = false;
 
-sleep( 2 );
+  sleep( 2 );
 
-$result2 = $result->arguments->torrents[0]->uploadLimit == 100 ? 'success' : 'failed';
-print "VERIFY TORRENT INFO SET/GET... [{$result2}] (".$result->arguments->torrents[0]->uploadLimit.")\n";
+  $result = $rpc->get( $id, array( 'uploadLimit' ) );
+  print "GET TORRENT INFO AS OBJECT TEST... [{$result->result}]\n";
+  
+  sleep( 2 );
+  
+  $result2 = $result->arguments->torrents[0]->uploadLimit == 10 ? 'success' : 'failed';
+  print "VERIFY TORRENT INFO SET/GET... [{$result2}] (".$result->arguments->torrents[0]->uploadLimit.")\n";
 
-try
-{
   $result = $rpc->stop( $id );
   print "STOP TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
+  sleep( 2 );
 
-sleep( 2 );
-
-try
-{
   $result = $rpc->verify( $id );
   print "VERIFY TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 10 );
+  sleep( 10 );
 
-try
-{
   $result = $rpc->start( $id );
   print "START TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 2 );
+  sleep( 2 );
 
-try
-{
   $result = $rpc->reannounce( $id );
   print "REANNOUNCE TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 2 );
+  sleep( 2 );
 
-try
-{
   $result = $rpc->move( $id, '/tmp/torrent-test', true );
   print "MOVE TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
-}
 
-sleep( 2 );
+  sleep( 2 );
 
-try
-{
   $result = $rpc->remove( $id, false );
   print "REMOVE TORRENT TEST... [{$result->result}]\n";
-} catch (Exception $e)
-{
-  die('Caught exception: ' . $e->getMessage() . PHP_EOL);
+  
+} catch (Exception $e) {
+  die('[ERROR] ' . $e->getMessage() . PHP_EOL);
 }
 
 ?>

@@ -19,27 +19,6 @@
  */
 
 /**
- * Transmission bittorrent client/daemon RPC communication class
- *
- * Usage example:
- * <code>
- *   $rpc = new TransmissionRPC($rpc_url);
- *   $result = $rpc->add( $url_or_path_to_torrent, $target_folder );
- * </code>
- *
- */
-
-/**
- * #defines used
- */
-define('TRANSMISSIONRPC_UA', 'TransmissionRPC for PHP/0.2');	// Useragent used in queries
-define('TRANSMISSIONRPC_MIN_PHPVER', '5.0.0');	// Minimum PHP version required
-define('TRANSMISSIONRPC_E_INVALIDARG', -1);	// Exception: Invalid arguments
-define('TRANSMISSIONRPC_E_SESSIONID', -2);	// Exception: Invalid Session-Id
-define('TRANSMISSIONRPC_E_CONNECTION', -3);	// Exception: Error while connecting
-define('TRANSMISSIONRPC_E_AUTHENTICATION', -4);	// Exception: Error 401 returned, unauthorized
-
-/**
  * PHP version specific information
  * version_compare() (PHP 4 >= 4.1.0, PHP 5)
  * ctype_digit() (PHP 4 >= 4.0.4, PHP 5)
@@ -50,11 +29,31 @@ define('TRANSMISSIONRPC_E_AUTHENTICATION', -4);	// Exception: Error 401 returned
 /**
  * A friendly little version check...
  */
-if (version_compare(PHP_VERSION, TRANSMISSIONRPC_MIN_PHPVER, '<'))
-  die( "The TransmissionRPC class requires PHP version {TRANSMISSIONRPC_MIN_PHPVER} or above.".PHP_EOL);
+if ( version_compare( PHP_VERSION, TransmissionRPC::MIN_PHPVER, '<' ) )
+  die( "The TransmissionRPC class requires PHP version {TransmissionRPC::TRANSMISSIONRPC_MIN_PHPVER} or above." . PHP_EOL );
 
+/**
+ * Transmission bittorrent client/daemon RPC communication class
+ *
+ * Usage example:
+ * <code>
+ *   $rpc = new TransmissionRPC($rpc_url);
+ *   $result = $rpc->add_file( $url_or_path_to_torrent, $target_folder );
+ * </code>
+ *
+ */
 class TransmissionRPC
 {
+  /**
+   * User agent used in all http communication
+   */
+  const HTTP_UA = 'TransmissionRPC for PHP/0.3';
+  
+  /**
+   * Minimum PHP version required
+   */
+  const MIN_PHPVER = '5.0.0';
+
   /**
    * The URL to the bittorent client you want to communicate with
    * the port (default: 9091) can be set in you Tranmission preferences
@@ -96,12 +95,11 @@ class TransmissionRPC
    * Default values for stream context
    * @var array
    */
-  private $default_context_opts = array(
-                                       'http' => array(
-                                                       'user_agent'  => TRANSMISSIONRPC_UA,
-                                                       //'timeout' => '5',     // Don't want to be too slow
-                                                       'ignore_errors' => true,	// Leave the error parsing/handling to the code
-                                                       )
+  private $default_context_opts = array( 'http' => array(
+                                           'user_agent'  => self::HTTP_UA,
+                                           //  'timeout' => '5',	// Don't want to be too slow
+                                           'ignore_errors' => true,	// Leave the error parsing/handling to the code
+                                         )
                                        );
   
   /**
@@ -223,8 +221,7 @@ class TransmissionRPC
    *  
    *   Either "filename" OR "metainfo" MUST be included.
    *     All other arguments are optional.   
-   */
-  /**
+   *
    * @param torrent_location The URL or path to the torrent file
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
@@ -236,7 +233,10 @@ class TransmissionRPC
     
     return $this->request( "torrent-add", $extra_options );
   }
+
   /**
+   * Add a torrent using the raw torrent data
+   *
    * @param torrent_metainfo The raw, unencoded contents (metainfo) of a torrent
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
@@ -248,8 +248,8 @@ class TransmissionRPC
     
     return $this->request( "torrent-add", $extra_options );
   }
-  /* (For backwards compatibility) */
-  /**
+
+  /* Add a new torrent using a file path or a URL (For backwards compatibility)
    * @param torrent_location The URL or path to the torrent file
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
@@ -325,7 +325,7 @@ class TransmissionRPC
    * @param object The request result to clean
    * @returns array The cleaned object
    */  
-  protected function cleanResultData ( $object )
+  protected function cleanResultObject ( $object )
   {
     // Prepare and cast object to array
     $return_as_array = false;
@@ -335,7 +335,7 @@ class TransmissionRPC
     {
       if( is_array( $array[$index] ) || is_object( $array[$index] ) )
       {
-        $array[$index] = $this->cleanResultData( $array[$index] );	// Recursion
+        $array[$index] = $this->cleanResultObject( $array[$index] );	// Recursion
       }
       if ( strstr( $index, '-' ) )
       {
@@ -362,17 +362,17 @@ class TransmissionRPC
   protected function request( $method, $arguments )
   {
     // Check the parameters
-    if (!is_scalar( $method))
-      throw new Exception('Method name has no scalar value', TRANSMISSIONRPC_E_INVALIDARG);
-    if (!is_array( $arguments))
-      throw new Exception('Arguments must be given as array', TRANSMISSIONRPC_E_INVALIDARG);
+    if ( !is_scalar( $method ) )
+      throw new Exception( 'Method name has no scalar value', TransmissionRPCException::E_INVALIDARG );
+    if ( !is_array( $arguments ) )
+      throw new Exception( 'Arguments must be given as array', TransmissionRPCException::E_INVALIDARG );
     
     $arguments = $this->cleanRequestData( $arguments );	// Sanitize input
     
     // Grab the X-Transmission-Session-Id if we don't have it already
-    if(!$this->session_id)
-      if(!$this->GetSessionID())
-        throw new Exception('Unable to acquire X-Transmission-Session-Id', TRANSMISSIONRPC_E_SESSIONID);
+    if( !$this->session_id )
+      if( !$this->GetSessionID() )
+        throw new Exception( 'Unable to acquire X-Transmission-Session-Id', TransmissionRPCException::E_SESSIONID );
     
     // Build (and encode) request array
     $data = array(
@@ -392,33 +392,33 @@ class TransmissionRPC
     if ( $this->username && $this->password )
       $contextopts['http']['header'] .= sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
     
-    if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: Stream context created with options:".
-                            PHP_EOL.print_r( $contextopts, true );
+    if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: Stream context created with options:" .
+                            PHP_EOL . print_r( $contextopts, true );
     
     $context  = stream_context_create( $contextopts );	// Create the context for this request
-    if ( $fp = fopen( $this->url, 'r', false, $context ) )	// Open a filepointer to the data, and use fgets to get the result
-    {
+    if ( $fp = fopen( $this->url, 'r', false, $context ) ) {	// Open a filepointer to the data, and use fgets to get the result
       $response = '';
-      while( $row = fgets( $fp ))
+      while( $row = fgets( $fp ) ) {
         $response.= trim( $row )."\n";
+      }
       if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: POST Result: ".
-                              PHP_EOL.print_r( $response, true );
+                              PHP_EOL . print_r( $response, true );
     } else
-      throw new Exception( 'Unable to connect to '.$this->url, TRANSMISSIONRPC_E_CONNECTION );
+      throw new Exception( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
     
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
     fclose( $fp );
-    if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: Stream meta info: ".
-                            PHP_EOL.print_r( $stream_meta, true );
+    if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method={$method}, ...):: Stream meta info: ".
+                            PHP_EOL . print_r( $stream_meta, true );
     if( $stream_meta['timed_out'] )
-      throw new Exception( "Timed out connecting to {$this->url}", TRANSMISSIONRPC_E_CONNECTION );
+      throw new Exception( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
-      throw new Exception( "Invalid username/password.", TRANSMISSIONRPC_E_AUTHENTICATION );
+      throw new Exception( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )
-      throw new Exception( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TRANSMISSIONRPC_E_SESSIONID );
+      throw new Exception( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
     
-    return $this->cleanResultData( json_decode( $response, $this->return_as_array ) );	// Return the sanitized result
+    return $this->return_as_array ? json_decode( $response, true ) : $this->cleanResultObject( json_decode( $response ) );	// Return the sanitized result
   }
 
   /**
@@ -430,7 +430,7 @@ class TransmissionRPC
   public function GetSessionID()
   {
     if( !$this->url )
-      throw new Exception( "Class must be initialized before GetSessionID() can be called.", TRANSMISSIONRPC_E_INVALIDARG );
+      throw new Exception( "Class must be initialized before GetSessionID() can be called.", TransmissionRPCException::E_INVALIDARG );
     
     // Setup the context
     $contextopts = $this->default_context_opts;	// Start with the defaults
@@ -443,21 +443,21 @@ class TransmissionRPC
       $contextopts['http']['header'] .= sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
     
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Stream context created with options:".
-                            PHP_EOL.print_r( $contextopts, true );
+                            PHP_EOL . print_r( $contextopts, true );
     
     $context  = stream_context_create( $contextopts );	// Create the context for this request
-    if ( ! $fp = fopen( $this->url, 'r', false, $context ) )	// Open a filepointer to the data, and use fgets to get the result
-      throw new Exception( 'Unable to connect to '.$this->url, TRANSMISSIONRPC_E_CONNECTION );
+    if ( ! $fp = @fopen( $this->url, 'r', false, $context ) )	// Open a filepointer to the data, and use fgets to get the result
+      throw new Exception( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
     
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
     fclose( $fp );
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Stream meta info: ".
-                            PHP_EOL.print_r( $stream_meta, true );
+                            PHP_EOL . print_r( $stream_meta, true );
     if( $stream_meta['timed_out'] )
-      throw new Exception( "Timed out connecting to {$this->url}", TRANSMISSIONRPC_E_CONNECTION );
+      throw new Exception( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
-      throw new Exception( "Invalid username/password.", TRANSMISSIONRPC_E_AUTHENTICATION );
+      throw new Exception( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )	// This is what we're hoping to find
     {
       // Loop through the returned headers and extract the X-Transmission-Session-Id
@@ -466,15 +466,17 @@ class TransmissionRPC
         if( strpos( $header, 'X-Transmission-Session-Id: ' ) === 0 )
         {
           if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Session-Id header: ".
-                                  PHP_EOL.print_r( $header, true );
+                                  PHP_EOL . print_r( $header, true );
           $this->session_id = trim( substr( $header, 27 ) );
           break;
         }
       }
-      if( ! $this->session_id )	// Didn't find a session_id
-        throw new Exception( "Unable to retrieve X-Transmission-Session-Id", TRANSMISSIONRPC_E_SESSIONID );
-    } else
+      if( ! $this->session_id ) {	// Didn't find a session_id
+        throw new Exception( "Unable to retrieve X-Transmission-Session-Id", TransmissionRPCException::E_SESSIONID );
+      }
+    } else {
       throw new Exception( "Unexpected response from Transmission RPC: ".$stream_meta['wrapper_data'][0] );
+    }
     return $this->session_id;
   }
   
@@ -503,4 +505,39 @@ class TransmissionRPC
     $this->session_id = null;
   }
 }
+
+/**
+ * This is the type of exception the TransmissionRPC class will throw
+ */
+class TransmissionRPCException extends Exception
+{
+  /**
+   * Exception: Invalid arguments
+   */
+  const E_INVALIDARG = -1;
+
+  /**
+   * Exception: Invalid Session-Id
+   */
+  const E_SESSIONID = -2;
+
+  /**
+   * Exception: Error while connecting
+   */
+  const E_CONNECTION = -3;
+
+  /**
+   * Exception: Error 401 returned, unauthorized
+   */
+  const E_AUTHENTICATION = -4;
+
+  /**
+   * Exception constructor
+   */
+  public function __construct( $message = null, $code = 0, Exception $previous = null )
+  {
+    parent::__construct( $message, $code, $previous );
+  }
+}
+
 ?>
