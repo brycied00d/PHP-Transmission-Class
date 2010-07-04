@@ -363,16 +363,16 @@ class TransmissionRPC
   {
     // Check the parameters
     if ( !is_scalar( $method ) )
-      throw new Exception( 'Method name has no scalar value', TransmissionRPCException::E_INVALIDARG );
+      throw new TransmissionRPCException( 'Method name has no scalar value', TransmissionRPCException::E_INVALIDARG );
     if ( !is_array( $arguments ) )
-      throw new Exception( 'Arguments must be given as array', TransmissionRPCException::E_INVALIDARG );
+      throw new TransmissionRPCException( 'Arguments must be given as array', TransmissionRPCException::E_INVALIDARG );
     
     $arguments = $this->cleanRequestData( $arguments );	// Sanitize input
     
     // Grab the X-Transmission-Session-Id if we don't have it already
     if( !$this->session_id )
       if( !$this->GetSessionID() )
-        throw new Exception( 'Unable to acquire X-Transmission-Session-Id', TransmissionRPCException::E_SESSIONID );
+        throw new TransmissionRPCException( 'Unable to acquire X-Transmission-Session-Id', TransmissionRPCException::E_SESSIONID );
     
     // Build (and encode) request array
     $data = array(
@@ -404,7 +404,7 @@ class TransmissionRPC
       if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: POST Result: ".
                               PHP_EOL . print_r( $response, true );
     } else
-      throw new Exception( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
+      throw new TransmissionRPCException( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
     
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
@@ -412,11 +412,11 @@ class TransmissionRPC
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method={$method}, ...):: Stream meta info: ".
                             PHP_EOL . print_r( $stream_meta, true );
     if( $stream_meta['timed_out'] )
-      throw new Exception( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
+      throw new TransmissionRPCException( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
-      throw new Exception( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
+      throw new TransmissionRPCException( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )
-      throw new Exception( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
+      throw new TransmissionRPCException( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
     
     return $this->return_as_array ? json_decode( $response, true ) : $this->cleanResultObject( json_decode( $response ) );	// Return the sanitized result
   }
@@ -430,7 +430,7 @@ class TransmissionRPC
   public function GetSessionID()
   {
     if( !$this->url )
-      throw new Exception( "Class must be initialized before GetSessionID() can be called.", TransmissionRPCException::E_INVALIDARG );
+      throw new TransmissionRPCException( "Class must be initialized before GetSessionID() can be called.", TransmissionRPCException::E_INVALIDARG );
     
     // Setup the context
     $contextopts = $this->default_context_opts;	// Start with the defaults
@@ -447,7 +447,7 @@ class TransmissionRPC
     
     $context  = stream_context_create( $contextopts );	// Create the context for this request
     if ( ! $fp = @fopen( $this->url, 'r', false, $context ) )	// Open a filepointer to the data, and use fgets to get the result
-      throw new Exception( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
+      throw new TransmissionRPCException( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
     
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
@@ -455,9 +455,9 @@ class TransmissionRPC
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Stream meta info: ".
                             PHP_EOL . print_r( $stream_meta, true );
     if( $stream_meta['timed_out'] )
-      throw new Exception( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
+      throw new TransmissionRPCException( "Timed out connecting to {$this->url}", TransmissionRPCException::E_CONNECTION );
     if( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "401" )
-      throw new Exception( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
+      throw new TransmissionRPCException( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )	// This is what we're hoping to find
     {
       // Loop through the returned headers and extract the X-Transmission-Session-Id
@@ -472,10 +472,10 @@ class TransmissionRPC
         }
       }
       if( ! $this->session_id ) {	// Didn't find a session_id
-        throw new Exception( "Unable to retrieve X-Transmission-Session-Id", TransmissionRPCException::E_SESSIONID );
+        throw new TransmissionRPCException( "Unable to retrieve X-Transmission-Session-Id", TransmissionRPCException::E_SESSIONID );
       }
     } else {
-      throw new Exception( "Unexpected response from Transmission RPC: ".$stream_meta['wrapper_data'][0] );
+      throw new TransmissionRPCException( "Unexpected response from Transmission RPC: ".$stream_meta['wrapper_data'][0] );
     }
     return $this->session_id;
   }
