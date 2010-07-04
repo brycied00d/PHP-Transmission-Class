@@ -440,7 +440,7 @@ class TransmissionRPC
     
     // Setup authentication (if provided)
     if ( $this->username && $this->password )
-      $contextopts['http']['header'] .= sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
+      $contextopts['http']['header'] = sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
     
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Stream context created with options:".
                             PHP_EOL . print_r( $contextopts, true );

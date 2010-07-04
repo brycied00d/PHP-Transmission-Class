@@ -6,6 +6,8 @@ require_once( dirname( __FILE__ ) . '/class/TransmissionRPC.class.php' );
 $test_torrent = "http://releases.ubuntu.com/10.04/ubuntu-10.04-desktop-i386.iso.torrent";
 
 $rpc = new TransmissionRPC();
+//$rpc->username = 'test';
+//$rpc->password = 'test';
 //$rpc->debug = true;
 
 try
