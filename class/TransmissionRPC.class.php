@@ -56,7 +56,7 @@ class TransmissionRPC
 
   /**
    * The URL to the bittorent client you want to communicate with
-   * the port (default: 9091) can be set in you Tranmission preferences
+   * the port (default: 9091) can be set in you Transmission preferences
    * @var string
    */
   public $url = '';
