@@ -310,10 +310,15 @@ class TransmissionRPC
   protected function cleanRequestData ( $array )
   {
     if ( !is_array( $array ) || count( $array ) == 0 ) return null;	// Nothing to clean
+    setlocale(LC_NUMERIC, 'en_US.utf8');	// Override the locale - if the system locale is wrong, then 12.34 will encode as 12,34 which is invalid JSON
     foreach ( $array as $index => $value )
     {
-      if( is_array( $array[$index] ) ) $array[$index] = $this->cleanRequestData( $array[$index] );	// Recursion
-      if ( empty( $value ) ) unset( $array[$index] );	// Remove empty members
+      if( is_object( $value ) ) $array[$index] = $value->toArray();	// Convert objects to arrays so they can be JSON encoded
+      if( is_array( $value ) ) $array[$index] = $this->cleanRequestData( $value );	// Recursion
+      if( empty( $value ) ) unset( $array[$index] );	// Remove empty members
+      if( is_numeric( $value ) ) $array[$index] = $value+0;	// Force type-casting for proper JSON encoding (+0 is a cheap way to maintain int/float/etc)
+      if( is_bool( $value ) ) $array[$index] = ( $value ? 1 : 0);	// Store boolean values as 0 or 1
+      if( is_string( $value ) ) $array[$index] = utf8_encode( $value );	// Make sure all data is UTF-8 encoded for Transmission
     }
     return $array;
   }
