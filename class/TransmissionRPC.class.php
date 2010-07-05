@@ -48,7 +48,7 @@ class TransmissionRPC
    * User agent used in all http communication
    */
   const HTTP_UA = 'TransmissionRPC for PHP/0.3';
-  
+
   /**
    * Minimum PHP version required
    */
@@ -60,37 +60,37 @@ class TransmissionRPC
    * @var string
    */
   public $url = '';
-  
+
   /**
    * If your Transmission RPC requires authentication, supply username here 
    * @var string
    */
   public $username = '';
-  
+
   /**
    * If your Transmission RPC requires authentication, supply password here 
    * @var string
    */
   public $password = '';
-  
+
   /**
    * Return results as an array, or an object (default)
    * @var bool
    */
   public $return_as_array = false;
-  
+
   /**
    * Print debugging information, default is off
    * @var bool
    */
   public $debug = false;
-  
+
   /**
    * Transmission uses a session id to prevent CSRF attacks
    * @var string 
    */
   protected $session_id = '';
-  
+
   /**
    * Default values for stream context
    * @var array
@@ -101,7 +101,16 @@ class TransmissionRPC
                                            'ignore_errors' => true,	// Leave the error parsing/handling to the code
                                          )
                                        );
-  
+
+  /**
+   * Constants for torrent status
+   */
+  const TR_STATUS_CHECK_WAIT = ( 1 << 0 );
+  const TR_STATUS_CHECK      = ( 1 << 1 );
+  const TR_STATUS_DOWNLOAD   = ( 1 << 2 );
+  const TR_STATUS_SEED       = ( 1 << 3 );
+  const TR_STATUS_STOPPED    = ( 1 << 4 );
+
   /**
    * Start one or more torrents
    *
@@ -125,7 +134,7 @@ class TransmissionRPC
     $request = array( "ids" => $ids );
     return $this->request( "torrent-stop", $request );
   }
-  
+
   /**
    * Reannounce one or more torrents
    *
@@ -137,7 +146,7 @@ class TransmissionRPC
     $request = array( "ids" => $ids );
     return $this->request( "torrent-reannounce", $request );
   }
-  
+
   /**
    * Verify one or more torrents
    *
@@ -149,7 +158,7 @@ class TransmissionRPC
     $request = array( "ids" => $ids );
     return $this->request( "torrent-verify", $request );
   }
-  
+
   /**
    * Get information on torrents in transmission, if the ids parameter is 
    * empty all torrents will be returned. The fields array can be used to return certain
@@ -200,7 +209,7 @@ class TransmissionRPC
     if ( !isset( $arguments['ids'] ) ) $arguments['ids'] = $ids;	// Any $ids given in $arguments overrides the method parameter
     return $this->request( "torrent-set", $arguments );
   }
-  
+
   /**
    * Add a new torrent
    *
@@ -258,7 +267,7 @@ class TransmissionRPC
   {
     return $this->add_file( $torrent_location, $save_path, $extra_options );
   }
-  
+
   /**
    * Remove torrent from transmission
    *
@@ -274,7 +283,7 @@ class TransmissionRPC
     );
     return $this->request( "torrent-remove", $request );
   }
-  
+
   /**
    * Move local storage location
    *
@@ -291,6 +300,27 @@ class TransmissionRPC
       "move" => $move_existing_data
     );
     return $this->request( "torrent-set-location", $request );  
+  }
+
+  /**
+   * Return the interpretation of the torrent status
+   *
+   * @param int The integer "torrent status"
+   * @returns string The translated meaning
+   */  
+  protected function getStatusString ( $intstatus )
+  {
+    if( $intstatus == TR_STATUS_CHECK_WAIT )
+      return "Waiting to verify local files";
+    if( $intstatus == TR_STATUS_CHECK )
+      return "Verifying local files";
+    if( $intstatus == TR_STATUS_DOWNLOAD )
+      return "Downloading";
+    if( $intstatus == TR_STATUS_SEED )
+      return "Seeding";
+    if( $intstatus == TR_STATUS_STOPPED )
+      return "Stopped";
+    return "Unknown";
   }
 
 
@@ -310,7 +340,7 @@ class TransmissionRPC
   protected function cleanRequestData ( $array )
   {
     if ( !is_array( $array ) || count( $array ) == 0 ) return null;	// Nothing to clean
-    setlocale(LC_NUMERIC, 'en_US.utf8');	// Override the locale - if the system locale is wrong, then 12.34 will encode as 12,34 which is invalid JSON
+    setlocale( LC_NUMERIC, 'en_US.utf8' );	// Override the locale - if the system locale is wrong, then 12.34 will encode as 12,34 which is invalid JSON
     foreach ( $array as $index => $value )
     {
       if( is_object( $value ) ) $array[$index] = $value->toArray();	// Convert objects to arrays so they can be JSON encoded
@@ -322,7 +352,7 @@ class TransmissionRPC
     }
     return $array;
   }
-  
+
   /**
    * Clean up the result object. Replaces all minus(-) characters in the object properties with underscores
    * and converts any object with any all-digit property names to an array.
@@ -356,7 +386,7 @@ class TransmissionRPC
     // Return array cast to object
     return $return_as_array ? $array : (object) $array;
   }
-  
+
   /**
    * The request handler method handles all requests to the Transmission client
    * 
@@ -484,7 +514,7 @@ class TransmissionRPC
     }
     return $this->session_id;
   }
-  
+
   /**
    * Takes the connection parameters
    *
