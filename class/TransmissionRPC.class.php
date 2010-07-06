@@ -105,11 +105,11 @@ class TransmissionRPC
   /**
    * Constants for torrent status
    */
-  const TR_STATUS_CHECK_WAIT = ( 1 << 0 );
-  const TR_STATUS_CHECK      = ( 1 << 1 );
-  const TR_STATUS_DOWNLOAD   = ( 1 << 2 );
-  const TR_STATUS_SEED       = ( 1 << 3 );
-  const TR_STATUS_STOPPED    = ( 1 << 4 );
+  const TR_STATUS_CHECK_WAIT = 1;
+  const TR_STATUS_CHECK      = 2;
+  const TR_STATUS_DOWNLOAD   = 4;
+  const TR_STATUS_SEED       = 8;
+  const TR_STATUS_STOPPED    = 16;
 
   /**
    * Start one or more torrents
