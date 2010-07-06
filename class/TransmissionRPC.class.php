@@ -308,17 +308,17 @@ class TransmissionRPC
    * @param int The integer "torrent status"
    * @returns string The translated meaning
    */  
-  protected function getStatusString ( $intstatus )
+  public function getStatusString ( $intstatus )
   {
-    if( $intstatus == TR_STATUS_CHECK_WAIT )
+    if( $intstatus == self::TR_STATUS_CHECK_WAIT )
       return "Waiting to verify local files";
-    if( $intstatus == TR_STATUS_CHECK )
+    if( $intstatus == self::TR_STATUS_CHECK )
       return "Verifying local files";
-    if( $intstatus == TR_STATUS_DOWNLOAD )
+    if( $intstatus == self::TR_STATUS_DOWNLOAD )
       return "Downloading";
-    if( $intstatus == TR_STATUS_SEED )
+    if( $intstatus == self::TR_STATUS_SEED )
       return "Seeding";
-    if( $intstatus == TR_STATUS_STOPPED )
+    if( $intstatus == self::TR_STATUS_STOPPED )
       return "Stopped";
     return "Unknown";
   }
