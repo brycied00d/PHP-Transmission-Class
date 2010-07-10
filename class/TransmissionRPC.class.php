@@ -571,7 +571,11 @@ class TransmissionRPCException extends Exception
    */
   public function __construct( $message = null, $code = 0, Exception $previous = null )
   {
-    parent::__construct( $message, $code, $previous );
+    // PHP version 5.3.0 and above support Exception linking
+    if ( version_compare( PHP_VERSION, '5.3.0', '>=' ) )
+      parent::__construct( $message, $code, $previous );
+    else
+      parent::__construct( $message, $code );
   }
 }
 
