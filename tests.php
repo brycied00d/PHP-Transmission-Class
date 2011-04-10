@@ -12,6 +12,11 @@ $rpc = new TransmissionRPC();
 
 try
 {
+  $result = $rpc->sstats( );
+  print "GET SESSION STATS... [{$result->result}]\n";
+
+  sleep( 2 );
+
   $result = $rpc->add( $test_torrent, '/tmp' );
   $id = $result->arguments->torrent_added->id;
   print "ADD TORRENT TEST... [{$result->result}] (id=$id)\n";
