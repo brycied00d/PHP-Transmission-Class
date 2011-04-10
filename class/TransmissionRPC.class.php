@@ -236,7 +236,7 @@ class TransmissionRPC
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add_file( $torrent_location, $save_path = '', $extra_options = array() )
+  public function add_file ( $torrent_location, $save_path = '', $extra_options = array() )
   {
     $extra_options['download-dir'] = $save_path;
     $extra_options['filename'] = $torrent_location;
@@ -251,7 +251,7 @@ class TransmissionRPC
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add_metainfo( $torrent_metainfo, $save_path = '', $extra_options = array() )
+  public function add_metainfo ( $torrent_metainfo, $save_path = '', $extra_options = array() )
   {
     $extra_options['download-dir'] = $save_path;
     $extra_options['metainfo'] = base64_encode( $torrent_metainfo );
@@ -264,7 +264,7 @@ class TransmissionRPC
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add( $torrent_location, $save_path = '', $extra_options = array() )
+  public function add ( $torrent_location, $save_path = '', $extra_options = array() )
   {
     return $this->add_file( $torrent_location, $save_path, $extra_options );
   }
@@ -301,6 +301,36 @@ class TransmissionRPC
       "move" => $move_existing_data
     );
     return $this->request( "torrent-set-location", $request );  
+  }
+
+  /**
+   * Retrieve session statistics
+   *
+   * @returns array of statistics
+   */
+  public function sstats ( )
+  {
+    return $this->request( "session-stats", array() );
+  }
+
+  /**
+   * Retrieve all session variables
+   *
+   * @returns array of session information
+   */
+  public function sget ( )
+  {
+    return $this->request( "session-get", array() );
+  }
+
+  /**
+   * Set session variable(s)
+   *
+   * @param array of session variables to set
+   */
+  public function sset ( $arguments )
+  {
+    return $this->request( "session-set", $arguments );
   }
 
   /**
