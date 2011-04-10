@@ -3,7 +3,7 @@
 
 require_once( dirname( __FILE__ ) . '/class/TransmissionRPC.class.php' );
 
-$test_torrent = "http://releases.ubuntu.com/10.04/ubuntu-10.04-desktop-i386.iso.torrent";
+$test_torrent = "http://www.slackware.com/torrents/slackware64-13.1-install-dvd.torrent";
 
 $rpc = new TransmissionRPC();
 //$rpc->username = 'test';
