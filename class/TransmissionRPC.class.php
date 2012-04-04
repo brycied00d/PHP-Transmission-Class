@@ -106,11 +106,13 @@ class TransmissionRPC
   /**
    * Constants for torrent status
    */
-  const TR_STATUS_CHECK_WAIT = 1;
-  const TR_STATUS_CHECK      = 2;
-  const TR_STATUS_DOWNLOAD   = 4;
-  const TR_STATUS_SEED       = 8;
-  const TR_STATUS_STOPPED    = 16;
+  const TR_STATUS_STOPPED       = 0;
+  const TR_STATUS_CHECK_WAIT    = 1;
+  const TR_STATUS_CHECK         = 2;
+  const TR_STATUS_DOWNLOAD_WAIT = 3;
+  const TR_STATUS_DOWNLOAD      = 4;
+  const TR_STATUS_SEED_WAIT     = 5;
+  const TR_STATUS_SEED          = 6;
 
   /**
    * Start one or more torrents
@@ -351,6 +353,10 @@ class TransmissionRPC
       return "Seeding";
     if( $intstatus == self::TR_STATUS_STOPPED )
       return "Stopped";
+    if( $intstatus == self::TR_STATUS_SEED_WAIT )
+      return "Queued for seeding";
+    if( $intstatus == self::TR_STATUS_DOWNLOAD_WAIT )
+      return "Queued for download";
     return "Unknown";
   }
 
