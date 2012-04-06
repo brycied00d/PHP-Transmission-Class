@@ -87,6 +87,12 @@ class TransmissionRPC
   public $debug = false;
 
   /**
+   * Transmission RPC version
+   * @var int
+   */
+  protected $rpc_version = 0;
+
+  /**
    * Transmission uses a session id to prevent CSRF attacks
    * @var string 
    */
@@ -106,11 +112,19 @@ class TransmissionRPC
   /**
    * Constants for torrent status
    */
-  const TR_STATUS_CHECK_WAIT = 1;
-  const TR_STATUS_CHECK      = 2;
-  const TR_STATUS_DOWNLOAD   = 4;
-  const TR_STATUS_SEED       = 8;
-  const TR_STATUS_STOPPED    = 16;
+  const TR_STATUS_STOPPED       = 0;
+  const TR_STATUS_CHECK_WAIT    = 1;
+  const TR_STATUS_CHECK         = 2;
+  const TR_STATUS_DOWNLOAD_WAIT = 3;
+  const TR_STATUS_DOWNLOAD      = 4;
+  const TR_STATUS_SEED_WAIT     = 5;
+  const TR_STATUS_SEED          = 6;
+
+  const RPC_LT_14_TR_STATUS_CHECK_WAIT = 1;
+  const RPC_LT_14_TR_STATUS_CHECK      = 2;
+  const RPC_LT_14_TR_STATUS_DOWNLOAD   = 4;
+  const RPC_LT_14_TR_STATUS_SEED       = 8;
+  const RPC_LT_14_TR_STATUS_STOPPED    = 16;
 
   /**
    * Start one or more torrents
@@ -341,16 +355,33 @@ class TransmissionRPC
    */  
   public function getStatusString ( $intstatus )
   {
-    if( $intstatus == self::TR_STATUS_CHECK_WAIT )
-      return "Waiting to verify local files";
-    if( $intstatus == self::TR_STATUS_CHECK )
-      return "Verifying local files";
-    if( $intstatus == self::TR_STATUS_DOWNLOAD )
-      return "Downloading";
-    if( $intstatus == self::TR_STATUS_SEED )
-      return "Seeding";
-    if( $intstatus == self::TR_STATUS_STOPPED )
-      return "Stopped";
+    if($this->rpc_version < 14){
+      if( $intstatus == self::RPC_LT_14_TR_STATUS_CHECK_WAIT )
+        return "Waiting to verify local files";
+      if( $intstatus == self::RPC_LT_14_TR_STATUS_CHECK )
+        return "Verifying local files";
+      if( $intstatus == self::RPC_LT_14_TR_STATUS_DOWNLOAD )
+        return "Downloading";
+      if( $intstatus == self::RPC_LT_14_TR_STATUS_SEED )
+        return "Seeding";
+      if( $intstatus == self::RPC_LT_14_TR_STATUS_STOPPED )
+        return "Stopped";
+    }else{
+      if( $intstatus == self::TR_STATUS_CHECK_WAIT )
+        return "Waiting to verify local files";
+      if( $intstatus == self::TR_STATUS_CHECK )
+        return "Verifying local files";
+      if( $intstatus == self::TR_STATUS_DOWNLOAD )
+        return "Downloading";
+      if( $intstatus == self::TR_STATUS_SEED )
+        return "Seeding";
+      if( $intstatus == self::TR_STATUS_STOPPED )
+        return "Stopped";
+      if( $intstatus == self::TR_STATUS_SEED_WAIT )
+        return "Queued for seeding";
+      if( $intstatus == self::TR_STATUS_DOWNLOAD_WAIT )
+        return "Queued for download";
+    }
     return "Unknown";
   }
 
@@ -569,6 +600,9 @@ class TransmissionRPC
     
     // Reset X-Transmission-Session-Id so we (re)fetch one
     $this->session_id = null;
+
+    // Get the Transmission RPC_version
+    $this->rpc_version = self::sget()->arguments->rpc_version;
   }
 }
 
