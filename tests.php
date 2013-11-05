@@ -6,8 +6,8 @@ require_once( dirname( __FILE__ ) . '/class/TransmissionRPC.class.php' );
 $test_torrent = "http://www.slackware.com/torrents/slackware64-13.1-install-dvd.torrent";
 
 $rpc = new TransmissionRPC();
-//$rpc->username = 'test';
-//$rpc->password = 'test';
+// A more complex example
+//$rpc = new TransmissionRPC('http://somehost:9091/transmission/rpc', 'testuser', 'testpassword');
 //$rpc->debug = true;
 
 try
