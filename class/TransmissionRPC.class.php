@@ -595,14 +595,14 @@ class TransmissionRPC
     $this->username = $username;
     $this->password = $password;
     
+    // Get the Transmission RPC_version
+    $this->rpc_version = self::sget()->arguments->rpc_version;
+    
     // Return As Array
     $this->return_as_array = $return_as_array;
     
     // Reset X-Transmission-Session-Id so we (re)fetch one
-    $this->session_id = null;
-
-    // Get the Transmission RPC_version
-    $this->rpc_version = self::sget()->arguments->rpc_version;
+    $this->session_id = null
   }
 }
 
