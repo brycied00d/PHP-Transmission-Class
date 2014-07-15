@@ -602,7 +602,7 @@ class TransmissionRPC
     $this->return_as_array = $return_as_array;
     
     // Reset X-Transmission-Session-Id so we (re)fetch one
-    $this->session_id = null
+    $this->session_id = null;
   }
 }
 
