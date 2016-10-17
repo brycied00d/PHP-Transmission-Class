@@ -252,7 +252,7 @@ class TransmissionRPC
    */
   public function add_file ( $torrent_location, $save_path = '', $extra_options = array() )
   {
-    $extra_options['download-dir'] = $save_path;
+    if(!empty($save_path)) $extra_options['download-dir'] = $save_path;
     $extra_options['filename'] = $torrent_location;
     
     return $this->request( "torrent-add", $extra_options );
