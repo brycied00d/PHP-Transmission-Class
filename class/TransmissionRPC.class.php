@@ -414,7 +414,7 @@ class TransmissionRPC
       }
       if( is_numeric( $value ) ) $array[$index] = $value+0;	// Force type-casting for proper JSON encoding (+0 is a cheap way to maintain int/float/etc)
       if( is_bool( $value ) ) $array[$index] = ( $value ? 1 : 0);	// Store boolean values as 0 or 1
-      if( is_string( $value ) ) $array[$index] = utf8_encode( $value );	// Make sure all data is UTF-8 encoded for Transmission
+//      if( is_string( $value ) ) $array[$index] = utf8_encode( $value );	// Make sure all data is UTF-8 encoded for Transmission
     }
     return $array;
   }
