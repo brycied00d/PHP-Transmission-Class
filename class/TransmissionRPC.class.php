@@ -345,7 +345,7 @@ class TransmissionRPC
   public function rename ( $ids, $path, $name )
   {
     if ( !is_array( $ids ) ) $ids = array( $ids );  // Convert $id to an array if only a single id was passed
-    if ( count($ids) !== 1 ) {
+    if ( count( $ids ) !== 1 ) {
       throw new TransmissionRPCException( 'A single id is accepted', TransmissionRPCException::E_INVALIDARG );
     }
 
