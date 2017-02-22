@@ -316,6 +316,47 @@ class TransmissionRPC
     );
     return $this->request( "torrent-set-location", $request );  
   }
+  
+  /**
+   * 3.7.  Renaming a Torrent's Path
+   * 
+   * Method name: "torrent-rename-path"
+   * 
+   * For more information on the use of this function, see the transmission.h
+   * documentation of tr_torrentRenamePath(). In particular, note that if this
+   * call succeeds you'll want to update the torrent's "files" and "name" field
+   * with torrent-get.
+   *
+   * Request arguments:
+   * 
+   * string                           | value type & description
+   * ---------------------------------+-------------------------------------------------
+   * "ids"                            | array      the torrent torrent list, as described in 3.1
+   *                                  |            (must only be 1 torrent)
+   * "path"                           | string     the path to the file or folder that will be renamed
+   * "name"                           | string     the file or folder's new name
+ 
+   * Response arguments: "path", "name", and "id", holding the torrent ID integer
+   *
+   * @param int|array ids A 1-element list of transmission torrent ids
+   * @param string path The path to the file or folder that will be renamed
+   * @param string name The file or folder's new name
+   */
+  public function rename ( $ids, $path, $name )
+  {
+    if ( !is_array( $ids ) ) $ids = array( $ids );  // Convert $id to an array if only a single id was passed
+    if ( count( $ids ) !== 1 ) {
+      throw new TransmissionRPCException( 'A single id is accepted', TransmissionRPCException::E_INVALIDARG );
+    }
+
+    $request = array(
+      "ids" => $ids,
+      "path" => $path,
+      "name" => $name
+    );
+    return $this->request( "torrent-rename-path", $request );  
+  }
+
 
   /**
    * Retrieve session statistics
