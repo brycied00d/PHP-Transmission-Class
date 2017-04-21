@@ -13,7 +13,7 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -63,13 +63,13 @@ class TransmissionRPC
   public $url = '';
 
   /**
-   * If your Transmission RPC requires authentication, supply username here 
+   * If your Transmission RPC requires authentication, supply username here
    * @var string
    */
   public $username = '';
 
   /**
-   * If your Transmission RPC requires authentication, supply password here 
+   * If your Transmission RPC requires authentication, supply password here
    * @var string
    */
   public $password = '';
@@ -94,7 +94,7 @@ class TransmissionRPC
 
   /**
    * Transmission uses a session id to prevent CSRF attacks
-   * @var string 
+   * @var string
    */
   protected $session_id = '';
 
@@ -175,7 +175,7 @@ class TransmissionRPC
   }
 
   /**
-   * Get information on torrents in transmission, if the ids parameter is 
+   * Get information on torrents in transmission, if the ids parameter is
    * empty all torrents will be returned. The fields array can be used to return certain
    * fields. Default fields are: "id", "name", "status", "doneDate", "haveValid", "totalSize".
    * See https://trac.transmissionbt.com/browser/trunk/doc/rpc-spec.txt for available fields
@@ -216,7 +216,7 @@ class TransmissionRPC
    *
    * @param array arguments An associative array of arguments to set
    * @param int|array ids A list of transmission torrent ids
-   */  
+   */
   public function set ( $ids = array(), $arguments = array() )
   {
     // See https://trac.transmissionbt.com/browser/trunk/doc/rpc-spec.txt for available fields
@@ -242,19 +242,19 @@ class TransmissionRPC
    *  "priority-high"      | array       indices of high-priority file(s)
    *  "priority-low"       | array       indices of low-priority file(s)
    *  "priority-normal"    | array       indices of normal-priority file(s)
-   *  
+   *
    *   Either "filename" OR "metainfo" MUST be included.
-   *     All other arguments are optional.   
+   *     All other arguments are optional.
    *
    * @param torrent_location The URL or path to the torrent file
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add_file ( $torrent_location, $save_path = '', $extra_options = array() )
+  public function add_file ( $torrent_location, $save_path = null, $extra_options = array() )
   {
     if(!empty($save_path)) $extra_options['download-dir'] = $save_path;
     $extra_options['filename'] = $torrent_location;
-    
+
     return $this->request( "torrent-add", $extra_options );
   }
 
@@ -265,11 +265,11 @@ class TransmissionRPC
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add_metainfo ( $torrent_metainfo, $save_path = '', $extra_options = array() )
+  public function add_metainfo ( $torrent_metainfo, $save_path = null, $extra_options = array() )
   {
     $extra_options['download-dir'] = $save_path;
     $extra_options['metainfo'] = base64_encode( $torrent_metainfo );
-    
+
     return $this->request( "torrent-add", $extra_options );
   }
 
@@ -278,7 +278,7 @@ class TransmissionRPC
    * @param save_path Folder to save torrent in
    * @param extra options Optional extra torrent options
    */
-  public function add ( $torrent_location, $save_path = '', $extra_options = array() )
+  public function add ( $torrent_location, $save_path = null, $extra_options = array() )
   {
     return $this->add_file( $torrent_location, $save_path, $extra_options );
   }
@@ -314,7 +314,7 @@ class TransmissionRPC
       "location" => $target_location,
       "move" => $move_existing_data
     );
-    return $this->request( "torrent-set-location", $request );  
+    return $this->request( "torrent-set-location", $request );
   }
   
   /**
@@ -393,7 +393,7 @@ class TransmissionRPC
    *
    * @param int The integer "torrent status"
    * @returns string The translated meaning
-   */  
+   */
   public function getStatusString ( $intstatus )
   {
     if($this->rpc_version < 14){
@@ -439,7 +439,7 @@ class TransmissionRPC
    *
    * @param array array The request associative array to clean
    * @returns array The cleaned array
-   */  
+   */
   protected function cleanRequestData ( $array )
   {
     if ( !is_array( $array ) || count( $array ) == 0 ) return null;	// Nothing to clean
@@ -471,7 +471,7 @@ class TransmissionRPC
    *
    * @param object The request result to clean
    * @returns array The cleaned object
-   */  
+   */
   protected function cleanResultObject ( $object )
   {
     // Prepare and cast object to array
@@ -487,7 +487,7 @@ class TransmissionRPC
       if ( strstr( $index, '-' ) )
       {
         $valid_index = str_replace( '-', '_', $index );
-        $array[$valid_index] = $array[$index]; 
+        $array[$valid_index] = $array[$index];
         unset( $array[$index] );
         $index = $valid_index;
       }
@@ -501,7 +501,7 @@ class TransmissionRPC
 
   /**
    * The request handler method handles all requests to the Transmission client
-   * 
+   *
    * @param string method The request method to use
    * @param array arguments The request arguments
    * @returns array The request result
@@ -513,35 +513,35 @@ class TransmissionRPC
       throw new TransmissionRPCException( 'Method name has no scalar value', TransmissionRPCException::E_INVALIDARG );
     if ( !is_array( $arguments ) )
       throw new TransmissionRPCException( 'Arguments must be given as array', TransmissionRPCException::E_INVALIDARG );
-    
+
     $arguments = $this->cleanRequestData( $arguments );	// Sanitize input
-    
+
     // Grab the X-Transmission-Session-Id if we don't have it already
     if( !$this->session_id )
       if( !$this->GetSessionID() )
         throw new TransmissionRPCException( 'Unable to acquire X-Transmission-Session-Id', TransmissionRPCException::E_SESSIONID );
-    
+
     // Build (and encode) request array
     $data = array(
       "method" => $method,
       "arguments" => $arguments
     );
     $data = json_encode( $data );
-    
+
     // performs the HTTP POST
     $contextopts = $this->default_context_opts;	// Start with the defaults
     $contextopts['http']['method'] = 'POST';
     $contextopts['http']['header'] = 'Content-type: application/json'."\r\n".
                                      'X-Transmission-Session-Id: '.$this->session_id."\r\n";
     $contextopts['http']['content'] = $data;
-    
+
     // Setup authentication (if provided)
     if ( $this->username && $this->password )
       $contextopts['http']['header'] .= sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
-    
+
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: request( method=$method, ...):: Stream context created with options:" .
                             PHP_EOL . print_r( $contextopts, true );
-    
+
     $context  = stream_context_create( $contextopts );	// Create the context for this request
     if ( $fp = fopen( $this->url, 'r', false, $context ) ) {	// Open a filepointer to the data, and use fgets to get the result
       $response = '';
@@ -552,7 +552,7 @@ class TransmissionRPC
                               PHP_EOL . print_r( $response, true );
     } else
       throw new TransmissionRPCException( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
-    
+
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
     fclose( $fp );
@@ -564,7 +564,7 @@ class TransmissionRPC
       throw new TransmissionRPCException( "Invalid username/password.", TransmissionRPCException::E_AUTHENTICATION );
     elseif( substr( $stream_meta['wrapper_data'][0], 9, 3 ) == "409" )
       throw new TransmissionRPCException( "Invalid X-Transmission-Session-Id. Please try again after calling GetSessionID().", TransmissionRPCException::E_SESSIONID );
-    
+
     return $this->return_as_array ? json_decode( $response, true ) : $this->cleanResultObject( json_decode( $response ) );	// Return the sanitized result
   }
 
@@ -578,24 +578,24 @@ class TransmissionRPC
   {
     if( !$this->url )
       throw new TransmissionRPCException( "Class must be initialized before GetSessionID() can be called.", TransmissionRPCException::E_INVALIDARG );
-    
+
     // Setup the context
     $contextopts = $this->default_context_opts;	// Start with the defaults
-    
+
     // Make sure it's blank/empty (reset)
     $this->session_id = null;
-    
+
     // Setup authentication (if provided)
     if ( $this->username && $this->password )
       $contextopts['http']['header'] = sprintf( "Authorization: Basic %s\r\n", base64_encode( $this->username.':'.$this->password ) );
-    
+
     if( $this->debug ) echo "TRANSMISSIONRPC_DEBUG:: GetSessionID():: Stream context created with options:".
                             PHP_EOL . print_r( $contextopts, true );
-    
+
     $context  = stream_context_create( $contextopts );	// Create the context for this request
     if ( ! $fp = @fopen( $this->url, 'r', false, $context ) )	// Open a filepointer to the data, and use fgets to get the result
       throw new TransmissionRPCException( 'Unable to connect to '.$this->url, TransmissionRPCException::E_CONNECTION );
-    
+
     // Check the response (headers etc)
     $stream_meta = stream_get_meta_data( $fp );
     fclose( $fp );
@@ -640,17 +640,17 @@ class TransmissionRPC
   {
     // server URL
     $this->url = $url;
-    
+
     // Username & password
     $this->username = $username;
     $this->password = $password;
-    
+
     // Get the Transmission RPC_version
     $this->rpc_version = self::sget()->arguments->rpc_version;
-    
+
     // Return As Array
     $this->return_as_array = $return_as_array;
-    
+
     // Reset X-Transmission-Session-Id so we (re)fetch one
     $this->session_id = null;
   }
